@@ -2,7 +2,7 @@
 const mongoose = require ('mongoose');
 //création schéma Mongoose utilisé pour le contenu des requêtes et des réponses
 const sauceSchema=mongoose.Schema({
-  sauceId:{type:String,required:true},
+  //sauceId:sera généré par la bdd?! {type:String,required:true},
   name: {type:String, required:true},
   manufacturer:{type:String, required:true},
   description:{type:String,required:true},

@@ -3,6 +3,7 @@ const express = require('express');
 //importation package pour tranformation corps requête en objet JSON utilisable
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
+//importation package pour traiter les requêtes vers la route /image
 const path = require('path')
 
 //importation routeurs
@@ -20,7 +21,7 @@ const app = express();
 
 //fonction pour tout type de requête (middleware)
 app.use((req, res, next) => {
-  res.setHeader('Access-Control-Allow-Origin', 'http://192.168.1.90:4200');
+  res.setHeader('Access-Control-Allow-Origin', 'http://192.168.1.90:4200/signup');
   res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content, Accept, Content-Type, Authorization');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
   //appel prochain middleware
@@ -30,7 +31,9 @@ app.use((req, res, next) => {
 //middleware global application tranformant corps requête en objet JSON
 app.use(bodyParser.json());
 
+//gestionnaire de routage qui va gérer la ressource images de manière statique
 app.use('/images', express.static(path.join(__dirname, 'images')));
+
 // attribution d'une route: url visée par appli, end-point)
 app.use ('/api/sauce', sauceRoutes);
 app.use('/api/auth', authRoutes);

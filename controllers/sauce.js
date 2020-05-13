@@ -1,5 +1,6 @@
 //importation modèle mongoose
-const sauce = require('../models/Sauce');
+const Sauce = require('../models/Sauce');
+//"file system": accès aux fonctions permettant modification système de fichiers
 const fs = require('fs');
 
 //récupération de la liste de sauces
@@ -23,8 +24,9 @@ exports.deleteSauce =(req, res, next)=>{
     .then(sauce => {
       //suppression image sauce
       const filename = sauce.imageUrl.split('/images/')[1];
+      //suppression sauce avec fonction unlike du package fs
       fs.unlink(`images/${filename}`, () =>{
-        //suppression sauce
+        //fichier à supprimer et callback à exécuter quand fichier supprimé
         Sauce.deleteOne({_id: req.params.id})
            .then(() => res.status(200).json({message:'Objet supprimé!'}))
            .catch(error => res.status(400).json({error}));
@@ -37,6 +39,7 @@ exports.deleteSauce =(req, res, next)=>{
 ///////////////////////////////////////////////////
 /////////////////////////////////////////////////
 exports.modifySauce=(req, res, next)=>{
+  //vérification existance de req.file
   const SauceObject= req.file ?
   {
     ...JSON.parse(req.body.sauce),
@@ -50,15 +53,21 @@ exports.modifySauce=(req, res, next)=>{
 //////////////////////////////////////////////////////
 ///////////////////////////////////////////
 exports.createSauce =(req,res,next)=>{
+  //"traduction" requête en JSON pour utilisation
   const sauceObject = JSON.parse(req.body.sauce);
   delete sauceObject._id;
   //création instance modèle Sauce en lui passant un objet JavaScript
   const sauce = new Sauce({
     //opérateur spread utilisé pour faire une copie de tous éléments de req.body
   ...sauceObject,
+  //construction url image
   imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`
+  req.body.likes=0;
+  req.body.dislikes=0;
+  req.body.saucesLiked=[];
+  req.body.saucesDisliked=[];
   });
-  //enregistrement enregistre sauce dans la base de données; renvoie une promise
+  //enregistrement sauce dans la base de données; renvoie une promise
   sauce.save()
   //réponse de réussite
   .then(()=> res.status(201).json({message:"Objet enregistré!"}))
