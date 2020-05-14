@@ -17,7 +17,7 @@ const normalizePort = val =>{
   return false;
 };
 // écoute sur port 3000 ou celui envoyé
-const port = normalizePort(process.env.PORT || 4200 || 3000);
+const port = normalizePort(process.env.PORT || 3000);
 app.set('port',port);
 
 //fonction qui recherche les erreurs et les gère de manière appropriée.
@@ -33,7 +33,7 @@ const errorHandler = error => {
       process.exit(1);
       break;
     case 'EADDRINUSE':
-      conole.error(bind + 'is already in use.');
+      console.error(bind + 'is already in use.');
       process.exit(1);
       break;
     default:

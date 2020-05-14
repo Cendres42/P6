@@ -36,15 +36,16 @@ exports.deleteSauce =(req, res, next)=>{
 };
 
 //mise à jour des informations d'une sauce
-///////////////////////////////////////////////////
-/////////////////////////////////////////////////
 exports.modifySauce=(req, res, next)=>{
   //vérification existance de req.file
-  const SauceObject= req.file ?
+  const sauceObject= req.file ?
+  //si fichier trouvé
   {
     ...JSON.parse(req.body.sauce),
     imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`
-  }: {...req.body};
+  }:
+  // si fichier non trouvé
+  {...req.body};
   Sauce.updateOne({_id: req.params.id}, {...sauceObject, _id:req.params.id})
     .then(() => res.status(200).json({message:'Objet modifié!'}))
     .catch(error => res.status(400).json({error}));
@@ -61,11 +62,11 @@ exports.createSauce =(req,res,next)=>{
     //opérateur spread utilisé pour faire une copie de tous éléments de req.body
   ...sauceObject,
   //construction url image
-  imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`
-  req.body.likes=0;
-  req.body.dislikes=0;
-  req.body.saucesLiked=[];
-  req.body.saucesDisliked=[];
+  imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`,
+  likes: 0,
+  dislikes:0,
+  usersLiked:[],
+  usersDisliked:[]
   });
   //enregistrement sauce dans la base de données; renvoie une promise
   sauce.save()
@@ -78,5 +79,25 @@ exports.createSauce =(req,res,next)=>{
 /////////////////////////////////////////////
 
 exports.likeSauce=(req,res,next)=>{
-
+  Sauce.findOne({_id: req.params.id})
+    .then(sauce => {
+      console.log(req.body.like);
+      if (req.body.like==1){
+        sauce.likes += 1;
+        sauce.usersLiked.push(req.body.userId);
+        sauce.save();
+        }
+      else if (req.body.like==-1) {
+        sauce.dislikes += 1;
+        sauce.usersDisliked.push(req.body.userId);
+          }
+      else if (req.body.like==0){
+        //sauce.saucesDisliked.delete(req.body.userId);
+        //sauce.saucesLiked.delete(req.body.userId);
+        sauce.likes-=1;
+        sauce.save();
+      }
+      res.status(200).json({likes: sauce.likes, message:"Like enregistré!"});
+  })
+    .catch(error => res.status(500).json({error}));
 }
