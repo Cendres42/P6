@@ -1,6 +1,6 @@
 const bcrypt = require('bcrypt');
 //importation modèle mongoose
-const Auth=require('../models/Auth');
+const User=require('../models/User');
 
 //importation package pour générer des tokens
 const jwt = require('jsonwebtoken');
@@ -11,12 +11,12 @@ exports.signup=(req, res, next)=>{
   bcrypt.hash(req.body.password, 10)
   //promise qui résolue et réussie crée un utilisateur, l'enregistre dans la bdd
     .then(hash =>{
-      const auth = new Auth({
-        authId: req.body.authId,
+      const user = new User({
+        userId: req.body.userId,
         email: req.body.email,
         password: hash
       });
-      auth.save()
+      user.save()
         .then(()=> res.status(200).json({message:'Utilisateur crée'}))
         .catch(error => res.status(400).json({error}));
     })
@@ -25,23 +25,23 @@ exports.signup=(req, res, next)=>{
 
 exports.login =(req, res, next)=>{
   //utilisation modèle Mongoose pour vérifier si e-mail existant dans la bdd
-  Auth.findOne({email: req.body.email})
-    .then(auth => {
-      if(!auth){
+  User.findOne({email: req.body.email})
+    .then(user => {
+      if(!user){
         return res.status(401).json({error: "Utilisateur non trouvé"});
       }
       //comparaison entre mot de passe entré et hash enregistré dans la bdd
-      bcrypt.compare(req.body.password, auth.password)
+      bcrypt.compare(req.body.password, user.password)
         .then(valid=> {
           if(!valid){
             return res.status(401).json({error: "Mot de passe incorrect"});
           }
           //si identification valide, envoi ID utilisateur et un token
           res.status(200).json({
-            authId: auth._id,
+            userId: user._id,
             //utilisation fonction sign de jwt pour générer un nouveau token
             token: jwt.sign(
-              {authId:auth._id},
+              {userId:user._id},
               //chaîne secrète de développement temporaire pour encoder token
               'RANDOM_TOKEN_SECRET',
               //durée de validité du token

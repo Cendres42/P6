@@ -4,15 +4,15 @@ const mongoose = require ('mongoose');
 const uniqueValidator = require ('mongoose-unique-validator');
 
 //création schéma Mongoose utilisé pour le contenu des requêtes et des réponses
-const authSchema = mongoose.Schema({
-  //authId sera généré par la bdd
+const userSchema = mongoose.Schema({
+  //userId sera généré par la bdd
   //valeur unique s'assurera qu'aucun des deux utilisateurs n'a le même mail
   email: {type:String, required: true, unique: true},
   password: {type: String, required: true}
 });
 
 //élément mongoose-unique-validator passé comme plug-in
-authSchema.plugin(uniqueValidator);
+userSchema.plugin(uniqueValidator);
 
 //exportation du modèle pour utilisation
-module.exports = mongoose.model('Auth',authSchema);
+module.exports = mongoose.model('User',userSchema);

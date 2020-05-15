@@ -3,6 +3,8 @@ const Sauce = require('../models/Sauce');
 //"file system": accès aux fonctions permettant modification système de fichiers
 const fs = require('fs');
 
+const jwt = require('jsonwebtoken');
+
 //récupération de la liste de sauces
 exports.getAllSauces = (req, res, next) => {
   Sauce.find()
@@ -81,23 +83,49 @@ exports.createSauce =(req,res,next)=>{
 exports.likeSauce=(req,res,next)=>{
   Sauce.findOne({_id: req.params.id})
     .then(sauce => {
-      console.log(req.body.like);
+      const token = req.headers.authorization.split(' ')[1];
+      //fonction verify pour décoder token
+      const decodedToken = jwt.verify(token, 'RANDOM_TOKEN_SECRET');
+      const userId = decodedToken.userId;
+      console.log(userId);
+      console.log(sauce);
       if (req.body.like==1){
-        sauce.likes += 1;
-        sauce.usersLiked.push(req.body.userId);
-        sauce.save();
+        if (!sauce.usersLiked.includes(userId)){
+          sauce.likes += 1;
+          sauce.usersLiked.push(userId);
+          sauce.save();
         }
+      }
       else if (req.body.like==-1) {
-        sauce.dislikes += 1;
-        sauce.usersDisliked.push(req.body.userId);
-          }
+        if (!sauce.usersDisliked.includes(userId)){
+          sauce.dislikes += 1;
+          sauce.usersDisliked.push(userId);
+          sauce.save();
+          console.log(sauce);
+        }
+      }
       else if (req.body.like==0){
-        //sauce.saucesDisliked.delete(req.body.userId);
-        //sauce.saucesLiked.delete(req.body.userId);
-        sauce.likes-=1;
+        // Parcours le tableau des utilisateurs qui ont "dislike"
+        for (let i = 0; i < sauce.usersDisliked.length; i++) {
+          // Si le i-eme utilisateur n'est pas celui recherche: rien a faire
+          if (sauce.usersDisliked[i] != userId)
+            continue;
+            // Suppression de l'utilisateur qui dislike
+            console.log("Supprime dislike index " + userId + "(index " +i+")");
+            sauce.usersDisliked.splice(i, 1);
+            sauce.dislikes-=1;
+        }
+       for (let i = 0; i < sauce.usersLiked.length; i++) {
+        if (sauce.usersLiked[i] != userId)
+          continue;
+          // Suppression de l'utilisateur qui dislike
+          console.log("Supprime like index " + userId + "(index " +i+")");
+          sauce.usersLiked.splice(i, 1);
+          sauce.likes-=1;
+        }
         sauce.save();
       }
-      res.status(200).json({likes: sauce.likes, message:"Like enregistré!"});
+      res.status(200).json({likes: sauce.likes, dislikes: sauce.dislikes, message:"Like enregistré!"});
   })
     .catch(error => res.status(500).json({error}));
 }

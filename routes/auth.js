@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const authCtrl = require('../controllers/auth');
+const userCtrl = require('../controllers/auth');
 
 //création deux routes POST
-router.post('/signup',authCtrl.signup);
-router.post('/login',authCtrl.login);
+router.post('/signup',userCtrl.signup);
+router.post('/login',userCtrl.login);
 
 module.exports= router;
