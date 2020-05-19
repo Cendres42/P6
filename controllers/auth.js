@@ -4,9 +4,20 @@ const User=require('../models/User');
 
 //importation package pour générer des tokens
 const jwt = require('jsonwebtoken');
+const validator =require('validator');
 
 //chiffrement du mot de passe utilisateur
 exports.signup=(req, res, next)=>{
+  if((typeof req.body.email == 'undefined')||
+     (!validator.isEmail(req.body.email))){
+    res.status(500).json({message:"Veuillez entrer un email valide"});
+    return;
+  }
+  if((typeof req.body.password == 'undefined')||
+     (!validator.isAscii(req.body.password))){
+    res.status(500).json({message:"Veuillez entrer un mot de passe valide"});
+    return;
+  }
   //appel fonction de hachage de bcrypt qui va « saler » le mot de passe 10 fois
   bcrypt.hash(req.body.password, 10)
   //promise qui résolue et réussie crée un utilisateur, l'enregistre dans la bdd
@@ -24,6 +35,17 @@ exports.signup=(req, res, next)=>{
 };
 
 exports.login =(req, res, next)=>{
+  if((typeof req.body.email == 'undefined')||
+     (!validator.isEmail(req.body.email))){
+    res.status(500).json({message:"Veuillez entrer un email valide"});
+    return;
+  }
+  if((typeof req.body.password == 'undefined')||
+     (!validator.isAscii(req.body.password)))
+  {
+    res.status(500).json({message:"Veuillez entrer un mot de passe valide"});
+    return;
+  }
   //utilisation modèle Mongoose pour vérifier si e-mail existant dans la bdd
   User.findOne({email: req.body.email})
     .then(user => {

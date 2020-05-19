@@ -5,6 +5,8 @@ const fs = require('fs');
 
 const jwt = require('jsonwebtoken');
 
+const validator =require('validator');
+
 //récupération de la liste de sauces
 exports.getAllSauces = (req, res, next) => {
   Sauce.find()
@@ -56,17 +58,43 @@ exports.modifySauce=(req, res, next)=>{
 //////////////////////////////////////////////////////
 ///////////////////////////////////////////
 exports.createSauce =(req,res,next)=>{
-  //"traduction" requête en JSON pour utilisation
-  const sauceObject = JSON.parse(req.body.sauce);
-  delete sauceObject._id;
+    console.log(req.body.sauce);
+
+    if(typeof req.body.sauce == 'undefined'){
+      res.status(500).json({message:"Veuillez vérifier votre saisie"});
+      return;
+    }
+
+    //"traduction" requête en JSON pour utilisation
+    const sauceObject = JSON.parse(req.body.sauce);
+    delete sauceObject._id;
+    // Recuperation de l'id de l'utilisateur qui cree la sauce
+    const token = req.headers.authorization.split(' ')[1];
+    const decodedToken = jwt.verify(token, 'RANDOM_TOKEN_SECRET');
+    const userId = decodedToken.userId;
+
+    if((typeof sauceObject.name == 'undefined')||
+       (typeof sauceObject.manufacturer == 'undefined')||
+       (typeof sauceObject.description == 'undefined')||
+       (typeof sauceObject.mainPepper == 'undefined')||
+       (!validator.isAlphanumeric(sauceObject.name))||
+       (!validator.isAlphanumeric(sauceObject.manufacturer))||
+       (!validator.isAlphanumeric(sauceObject.description))||
+       (!validator.isAlphanumeric(sauceObject.mainPepper))){
+      res.status(500).json({message:"Veuillez vérifier votre saisie"});
+      return;
+    }
+
+
   //création instance modèle Sauce en lui passant un objet JavaScript
   const sauce = new Sauce({
     //opérateur spread utilisé pour faire une copie de tous éléments de req.body
   ...sauceObject,
   //construction url image
   imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`,
-  likes: 0,
-  dislikes:0,
+  userId:    userId,
+  likes:     0,
+  dislikes:  0,
   usersLiked:[],
   usersDisliked:[]
   });
@@ -84,7 +112,6 @@ exports.likeSauce=(req,res,next)=>{
   Sauce.findOne({_id: req.params.id})
     .then(sauce => {
       const token = req.headers.authorization.split(' ')[1];
-      //fonction verify pour décoder token
       const decodedToken = jwt.verify(token, 'RANDOM_TOKEN_SECRET');
       const userId = decodedToken.userId;
       console.log(userId);
@@ -111,15 +138,16 @@ exports.likeSauce=(req,res,next)=>{
           if (sauce.usersDisliked[i] != userId)
             continue;
             // Suppression de l'utilisateur qui dislike
-            console.log("Supprime dislike index " + userId + "(index " +i+")");
+            console.log("Supprime dislike " + userId + "(index " +i+")");
             sauce.usersDisliked.splice(i, 1);
             sauce.dislikes-=1;
         }
        for (let i = 0; i < sauce.usersLiked.length; i++) {
-        if (sauce.usersLiked[i] != userId)
+         // Si le i-eme utilisateur n'est pas celui recherche: rien a faire
+          if (sauce.usersLiked[i] != userId)
           continue;
-          // Suppression de l'utilisateur qui dislike
-          console.log("Supprime like index " + userId + "(index " +i+")");
+          // Suppression de l'utilisateur qui like
+          console.log("Supprime like " + userId + "(index " +i+")");
           sauce.usersLiked.splice(i, 1);
           sauce.likes-=1;
         }

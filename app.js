@@ -6,6 +6,7 @@ const mongoose = require('mongoose');
 //importation package pour traiter les requêtes vers la route /image
 const path = require('path')
 
+
 //importation routeurs
 const sauceRoutes=require('./routes/sauce');
 const authRoutes = require('./routes/auth');
@@ -19,6 +20,9 @@ mongoose.connect('mongodb+srv://Cendres42:Gara42!!@cluster0-veqby.mongodb.net/Pr
 //création appli qui appelle méthode express
 const app = express();
 
+//package pour éviter les injections
+var mongoSanitize = require('express-mongo-sanitize');
+
 //fonction pour tout type de requête (middleware)
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', 'http://localhost:4200');
@@ -29,7 +33,18 @@ app.use((req, res, next) => {
 });
 
 //middleware global application tranformant corps requête en objet JSON
+app.use(bodyParser.urlencoded({extended: true}));
 app.use(bodyParser.json());
+
+// To remove data, use:
+app.use(mongoSanitize());
+
+
+//limitation taille requetes pour les securiser
+app.use(express.urlencoded({ limit: "1kb" }));
+app.use(express.json({ limit: "1kb" }));
+//app.use(express.multipart({ limit:"10mb" }));
+//app.use(express.limit("10kb"));
 
 //gestionnaire de routage qui va gérer la ressource images de manière statique
 app.use('/images', express.static(path.join(__dirname, 'images')));
