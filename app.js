@@ -1,6 +1,6 @@
 //importation package express
 const express = require('express');
-//importation package pour tranformation corps requête en objet JSON utilisable
+//importation package pour tranformation corps requête en objet JSON
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 //importation package pour traiter les requêtes vers la route /image
@@ -36,7 +36,7 @@ app.use((req, res, next) => {
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(bodyParser.json());
 
-// To remove data, use:
+// enleve les caractères:
 app.use(mongoSanitize());
 
 

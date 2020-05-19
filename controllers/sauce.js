@@ -14,7 +14,7 @@ exports.getAllSauces = (req, res, next) => {
     .catch(error => res.status(400).json({error}));
 }
 
-//récupération d'une sauce à aprtir de son identifiant
+//récupération d'une sauce à partir de son identifiant
 exports.getOneSauce = (req, res, next)=>{
   Sauce.findOne({_id: req.params.id})
     .then(sauce => res.status(200).json(sauce))
@@ -50,21 +50,40 @@ exports.modifySauce=(req, res, next)=>{
   }:
   // si fichier non trouvé
   {...req.body};
-  Sauce.updateOne({_id: req.params.id}, {...sauceObject, _id:req.params.id})
+  if((typeof sauceObject.name == 'undefined')||
+    (!validator.isAlphanumeric(sauceObject.name, 'fr-FR'))) {
+      res.status(500).json({message:"Nom invalide"});
+      return;
+    }
+  if((typeof sauceObject.manufacturer == 'undefined')||
+  (!validator.isAlphanumeric(sauceObject.manufacturer, 'fr-FR'))){
+    res.status(500).json({message:"Manufacturer invalide"});
+    return;
+  }
+  let description = sauceObject.description.replace(/ /g, "");
+  if((typeof sauceObject.description == 'undefined')||
+     (!validator.isAlphanumeric(description, 'fr-FR'))) {
+       res.status(500).json({message:"Description invalide"});
+       return;
+     }
+  if((typeof sauceObject.mainPepper == 'undefined')||
+     (!validator.isAlphanumeric(sauceObject.mainPepper, 'fr-FR'))){
+    res.status(500).json({message:"Ingrédient invalide"});
+    return;
+  }
+
+  Sauce.updateOne({_id: req.params.id}, {...sauceObject,_id:req.params.id})
     .then(() => res.status(200).json({message:'Objet modifié!'}))
     .catch(error => res.status(400).json({error}));
 }
 
-//////////////////////////////////////////////////////
-///////////////////////////////////////////
-exports.createSauce =(req,res,next)=>{
-    console.log(req.body.sauce);
 
-    if(typeof req.body.sauce == 'undefined'){
+exports.createSauce =(req,res,next)=>{
+    if((typeof req.body.sauce == 'undefined')||
+    (!validator.isJSON(req.body.sauce))){
       res.status(500).json({message:"Veuillez vérifier votre saisie"});
       return;
     }
-
     //"traduction" requête en JSON pour utilisation
     const sauceObject = JSON.parse(req.body.sauce);
     delete sauceObject._id;
@@ -73,23 +92,38 @@ exports.createSauce =(req,res,next)=>{
     const decodedToken = jwt.verify(token, 'RANDOM_TOKEN_SECRET');
     const userId = decodedToken.userId;
 
-    if((typeof sauceObject.name == 'undefined')||
-       (typeof sauceObject.manufacturer == 'undefined')||
-       (typeof sauceObject.description == 'undefined')||
-       (typeof sauceObject.mainPepper == 'undefined')||
-       (!validator.isAlphanumeric(sauceObject.name))||
-       (!validator.isAlphanumeric(sauceObject.manufacturer))||
-       (!validator.isAlphanumeric(sauceObject.description))||
-       (!validator.isAlphanumeric(sauceObject.mainPepper))){
-      res.status(500).json({message:"Veuillez vérifier votre saisie"});
-      return;
-    }
+      if((typeof sauceObject.name == 'undefined')||
+        (!validator.isAlphanumeric(sauceObject.name, 'fr-FR'))) {
+          res.status(500).json({message:"Nom invalide"});
+          return;
+        }
+
+      if((typeof sauceObject.manufacturer == 'undefined')||
+      (!validator.isAlphanumeric(sauceObject.manufacturer, 'fr-FR'))){
+        res.status(500).json({message:"Manufacturer invalide"});
+        return;
+      }
+      description = sauceObject.description.replace(/ /g, "");
+      if((typeof sauceObject.description == 'undefined')||
+         (!validator.isAlphanumeric(description, 'fr-FR'))){
+           res.status(500).json({message:"Description invalide"});
+           return;
+         }
+      if((typeof sauceObject.mainPepper == 'undefined')||
+         (!validator.isAlphanumeric(sauceObject.mainPepper, 'fr-FR'))){
+        res.status(500).json({message:"Ingrédient invalide"});
+        return;
+      }
 
 
   //création instance modèle Sauce en lui passant un objet JavaScript
   const sauce = new Sauce({
     //opérateur spread utilisé pour faire une copie de tous éléments de req.body
-  ...sauceObject,
+  name:sauceObject.name ,
+  manufacturer:sauceObject.manufacturer,
+  description: sauceObject.description,
+  mainPepper: sauceObject.mainPepper,
+  heat:sauceObject.heat,
   //construction url image
   imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`,
   userId:    userId,
@@ -105,8 +139,7 @@ exports.createSauce =(req,res,next)=>{
   //réponse d'erreurs
   .catch(error => res.status(400).json({error}));
 }
-/////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////
+
 
 exports.likeSauce=(req,res,next)=>{
   Sauce.findOne({_id: req.params.id})
