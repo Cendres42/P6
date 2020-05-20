@@ -3,6 +3,8 @@ const Sauce = require('../models/Sauce');
 //"file system": accès aux fonctions permettant modification système de fichiers
 const fs = require('fs');
 
+const cst = require('../constante');
+
 const jwt = require('jsonwebtoken');
 
 const validator =require('validator');
@@ -26,9 +28,8 @@ exports.deleteSauce =(req, res, next)=>{
   //trouve la sauce à supprimer à partir de son id
   Sauce.findOne({_id: req.params.id})
     .then(sauce => {
-      //suppression image sauce
       const filename = sauce.imageUrl.split('/images/')[1];
-      //suppression sauce avec fonction unlike du package fs
+      //suppression image avec fonction unlike du package fs
       fs.unlink(`images/${filename}`, () =>{
         //fichier à supprimer et callback à exécuter quand fichier supprimé
         Sauce.deleteOne({_id: req.params.id})
@@ -71,12 +72,10 @@ exports.modifySauce=(req, res, next)=>{
     res.status(500).json({message:"Ingrédient invalide"});
     return;
   }
-
   Sauce.updateOne({_id: req.params.id}, {...sauceObject,_id:req.params.id})
     .then(() => res.status(200).json({message:'Objet modifié!'}))
     .catch(error => res.status(400).json({error}));
 }
-
 
 exports.createSauce =(req,res,next)=>{
     if((typeof req.body.sauce == 'undefined')||
@@ -89,63 +88,58 @@ exports.createSauce =(req,res,next)=>{
     delete sauceObject._id;
     // Recuperation de l'id de l'utilisateur qui cree la sauce
     const token = req.headers.authorization.split(' ')[1];
-    const decodedToken = jwt.verify(token, 'RANDOM_TOKEN_SECRET');
+    const decodedToken = jwt.verify(token, cst.random);
     const userId = decodedToken.userId;
-
-      if((typeof sauceObject.name == 'undefined')||
-        (!validator.isAlphanumeric(sauceObject.name, 'fr-FR'))) {
-          res.status(500).json({message:"Nom invalide"});
-          return;
-        }
-
-      if((typeof sauceObject.manufacturer == 'undefined')||
-      (!validator.isAlphanumeric(sauceObject.manufacturer, 'fr-FR'))){
-        res.status(500).json({message:"Manufacturer invalide"});
+    if((typeof sauceObject.name == 'undefined')||
+      (!validator.isAlphanumeric(sauceObject.name, 'fr-FR'))) {
+        res.status(500).json({message:"Nom invalide"});
         return;
       }
-      description = sauceObject.description.replace(/ /g, "");
-      if((typeof sauceObject.description == 'undefined')||
-         (!validator.isAlphanumeric(description, 'fr-FR'))){
-           res.status(500).json({message:"Description invalide"});
-           return;
-         }
-      if((typeof sauceObject.mainPepper == 'undefined')||
-         (!validator.isAlphanumeric(sauceObject.mainPepper, 'fr-FR'))){
-        res.status(500).json({message:"Ingrédient invalide"});
-        return;
-      }
-
-
-  //création instance modèle Sauce en lui passant un objet JavaScript
-  const sauce = new Sauce({
-    //opérateur spread utilisé pour faire une copie de tous éléments de req.body
-  name:sauceObject.name ,
-  manufacturer:sauceObject.manufacturer,
-  description: sauceObject.description,
-  mainPepper: sauceObject.mainPepper,
-  heat:sauceObject.heat,
-  //construction url image
-  imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`,
-  userId:    userId,
-  likes:     0,
-  dislikes:  0,
-  usersLiked:[],
-  usersDisliked:[]
-  });
-  //enregistrement sauce dans la base de données; renvoie une promise
-  sauce.save()
-  //réponse de réussite
-  .then(()=> res.status(201).json({message:"Objet enregistré!"}))
-  //réponse d'erreurs
-  .catch(error => res.status(400).json({error}));
-}
+    if((typeof sauceObject.manufacturer == 'undefined')||
+    (!validator.isAlphanumeric(sauceObject.manufacturer, 'fr-FR'))){
+      res.status(500).json({message:"Manufacturer invalide"});
+      return;
+    }
+    description = sauceObject.description.replace(/ /g, "");
+    if((typeof sauceObject.description == 'undefined')||
+       (!validator.isAlphanumeric(description, 'fr-FR'))){
+         res.status(500).json({message:"Description invalide"});
+         return;
+     }
+    if((typeof sauceObject.mainPepper == 'undefined')||
+       (!validator.isAlphanumeric(sauceObject.mainPepper, 'fr-FR'))){
+      res.status(500).json({message:"Ingrédient invalide"});
+      return;
+    }
+    //création instance modèle Sauce en lui passant un objet JavaScript
+    const sauce = new Sauce({
+      name:sauceObject.name ,
+      manufacturer:sauceObject.manufacturer,
+      description: sauceObject.description,
+      mainPepper: sauceObject.mainPepper,
+      heat:sauceObject.heat,
+      //construction url image
+      imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`,
+      userId:    userId,
+      likes:     0,
+      dislikes:  0,
+      usersLiked:[],
+      usersDisliked:[]
+    });
+    //enregistrement sauce dans la base de données; renvoie une promise
+    sauce.save()
+    //réponse de réussite
+    .then(()=> res.status(201).json({message:"Objet enregistré!"}))
+    //réponse d'erreurs
+    .catch(error => res.status(400).json({error}));
+    }
 
 
 exports.likeSauce=(req,res,next)=>{
   Sauce.findOne({_id: req.params.id})
     .then(sauce => {
       const token = req.headers.authorization.split(' ')[1];
-      const decodedToken = jwt.verify(token, 'RANDOM_TOKEN_SECRET');
+      const decodedToken = jwt.verify(token, cst.random);
       const userId = decodedToken.userId;
       console.log(userId);
       console.log(sauce);

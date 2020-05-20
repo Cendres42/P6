@@ -2,6 +2,7 @@ const bcrypt = require('bcrypt');
 //importation modèle mongoose
 const User=require('../models/User');
 
+const cst=require('../constante')
 //importation package pour générer des tokens
 const jwt = require('jsonwebtoken');
 const validator =require('validator');
@@ -65,7 +66,7 @@ exports.login =(req, res, next)=>{
             token: jwt.sign(
               {userId:user._id},
               //chaîne secrète de développement temporaire pour encoder token
-              'RANDOM_TOKEN_SECRET',
+              cst.random,
               //durée de validité du token
               {expiresIn:'24h'}
             )

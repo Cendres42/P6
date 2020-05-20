@@ -6,12 +6,13 @@ const mongoose = require('mongoose');
 //importation package pour traiter les requêtes vers la route /image
 const path = require('path')
 
+const cst = require('./constante');
 
 //importation routeurs
 const sauceRoutes=require('./routes/sauce');
 const authRoutes = require('./routes/auth');
 
-mongoose.connect('mongodb+srv://Cendres42:Gara42!!@cluster0-veqby.mongodb.net/Projet6?retryWrites=true&w=majority',
+mongoose.connect('mongodb+srv://'+cst.login+':'+cst.pass+'@cluster0-veqby.mongodb.net/Projet6?retryWrites=true&w=majority',
   { useNewUrlParser: true,
     useUnifiedTopology: true })
   .then(() => console.log('Connexion à MongoDB réussie !'))
